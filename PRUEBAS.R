@@ -127,38 +127,65 @@ library(ggplot2)
 library(ggiraphExtra)
 library(dplyr)
 library(ggimage)
+library(deldir)
+library(ggrepel)
+library(gridExtra)
 
-# Datos corregidos (agregando una especie faltante o eliminando la extra)
-data <- data.frame(
-  ESPECIES = c("Theobroma cacao L.", "Citrus sinensis (L.) Osbeck", "Cedrela odorata L.",
-               "Theobroma cacao L. var. tigre", "Cordia alliodora (Ruiz & Pav.) Oken", "Cocos nucifera L.",
-               "Musa paradisiaca L.", "Inga inicuil (Kunth) DC", "Persea schiedeana Nees", "Litchi chinensis Sonn",
-               "Citrus reticulata Blanco", "Musa acuminata Colla", "Persea americana Mill.", "Chamaedorea tepejilote Liebm.",
-               "Psidium friedrichsthalianum O. Berg.", "Mangifera indica L. Manila", "Inga vera Willd",
-               "Mangifera indica L. 'Petacón'", "Annona reticulata L.", "Pouteria sapota (Jacq.) H.E. Moore & Stearn",
-               "Citrus limon (L.) Burm. f.", "Tamarindus indica L.", "Manilkara zapota (L.) P.Royen",
-               "Spondias mombin L.", "Spondias purpurea L.", "Byrsonima crassifolia (L.) Kunth.", 
-               "Sideroxylon celastrinum (Kunth) T.D.Penn"),
-  DR = c(20.696, 13.287, 13.773, 7.683, 7.041, 5.714, 1.968, 3.355, 3.403, 2.926, 2.008, 1.011, 2.691, 0.590,
-         1.742, 1.990, 1.391, 1.414, 1.259, 0.435, 1.310, 0.838, 1.134, 1.134, 0.372, 0.421, 0.411),
-  AR = c(19.293, 9.325, 7.395, 8.682, 3.859, 4.823, 7.717, 3.859, 3.215, 3.537, 3.859, 4.823, 1.929, 3.859,
-         2.572, 1.608, 1.608, 1.286, 0.965, 1.608, 0.643, 0.965, 0.643, 0.643, 0.322, 0.322),
-  IVI = c(19.994, 11.306, 10.584, 8.182, 5.450, 5.269, 4.843, 3.607, 3.309, 3.231, 2.933, 2.917, 2.310, 2.224,
-          2.157, 1.799, 1.500, 1.350, 1.112, 1.021, 0.977, 0.901, 0.889, 0.889, 0.508, 0.371, 0.366)
-)
+# Datos
+especies <- c("Theobroma cacao L.", "Citrus sinensis", "Cedrela odorata", "T. cacao var. tigre", "Cordia alliodora",
+              "Cocos nucifera", "Musa paradisiaca", "Inga inicuil", "Persea schiedeana", "Litchi chinensis",
+              "Citrus reticulata", "Musa acuminata", "Persea americana", "Chamaedorea tepejilote", "Psidium friedrichsthalianum",
+              "Mangifera indica 'Manila'", "Inga vera", "Mangifera indica 'Petacón'", "Annona reticulata", "Pouteria sapota",
+              "Citrus limon", "Tamarindus indica", "Manilkara zapota", "Spondias mombin", "Spondias purpurea",
+              "Byrsonima crassifolia", "Sideroxylon celastrinum")
 
-length(data$ESPECIES)  # Longitud de la columna de especies
-length(data$DR)        # Longitud de la columna DR
-length(data$AR)        # Longitud de la columna AR
-length(data$IVI)       # Longitud de la columna IVI
-# Crear un gráfico de Voronoi usando la función deldir
+dr <- c(20.70, 13.29, 13.77, 7.68, 7.04, 5.71, 1.97, 3.36, 3.40, 2.93,
+        2.01, 1.01, 2.69, 0.59, 1.74, 1.99, 1.39, 1.41, 1.26, 0.43,
+        1.31, 0.84, 1.13, 1.13, 0.37, 0.42, 0.41)
+
+ar <- c(19.29, 9.32, 7.40, 8.68, 3.86, 4.82, 7.72, 3.86, 3.22, 3.54,
+        3.86, 4.82, 1.93, 3.86, 2.57, 1.61, 1.61, 1.29, 0.96, 1.61,
+        0.64, 0.96, 0.64, 0.64, 0.64, 0.32, 0.32)
+
+ivi <- c(19.99, 11.31, 10.58, 8.18, 5.45, 5.27, 4.84, 3.61, 3.31, 3.23,
+         2.93, 2.92, 2.31, 2.22, 2.16, 1.80, 1.50, 1.35, 1.11, 1.02,
+         0.98, 0.90, 0.89, 0.89, 0.51, 0.37, 0.37)
+
+# Crear data frame
+data <- data.frame(ID = 1:length(especies), Especie = especies, DR = dr, AR = ar, IVI = ivi)
+
+# Calcular diagrama de Voronoi
 voronoi <- deldir(data$DR, data$AR)
 
-# Visualizar el gráfico con ggplot2
-ggplot() +
-  geom_tile(data = voronoi, aes(x = x, y = y, fill = factor(region)), alpha = 0.2) +
-  geom_point(data = data, aes(x = DR, y = AR), color = "black", size = 3) +
-  geom_text(data = data, aes(x = DR, y = AR, label = ESPECIES), size = 3, hjust = 0, vjust = 0) +
-  theme_minimal() +
-  labs(title = "Diagrama de Voronoi de las especies", x = "DR", y = "AR") +
-  theme(legend.position = "none")
+# Convertir polígonos en un data frame para ggplot
+tiles <- tile.list(voronoi)
+vor_df <- do.call(rbind, lapply(seq_along(tiles), function(i) {
+  tile <- tiles[[i]]
+  data.frame(
+    x = tile$x,
+    y = tile$y,
+    ID = data$ID[i],
+    IVI = data$IVI[i]
+  )
+}))
+
+# Crear la gráfica de Voronoi
+voronoi_plot <- ggplot() +
+  geom_polygon(data = vor_df, aes(x = x, y = y, group = ID, fill = IVI), color = "black", alpha = 0.8) +
+  scale_fill_gradient(low = "lightblue", high = "darkred", name = "IVI", 
+                      limits = c(0, 20),
+                      breaks = seq(0, 20, by = 2),
+                      guide = guide_colorbar(barwidth = 2, barheight = 30)) +
+  geom_text(data = data, aes(x = DR, y = AR, label = ID), size = 3, fontface = "bold", color = "black") +
+  labs(
+       x = "Dominancia Relativa (DRi)", y = "Abundancia Relativa (ARi)") +
+  theme_minimal()
+
+# Crear la tabla de leyenda con ID, Especie e IVI
+legend_plot <- ggplot(data, aes(y = ID, x = 1, label = paste(ID, Especie, "-", IVI))) +
+  geom_text(hjust = 0, size = 3) +
+  theme_void() +
+  theme(plot.title = element_text(size = 10, hjust = 0.5))
+
+# Ajustar la disposición de los gráficos para acercar la leyenda de especies a la leyenda de IVI
+grid.arrange(voronoi_plot, legend_plot, ncol = 2, widths = c(5,0))
