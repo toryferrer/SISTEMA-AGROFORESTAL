@@ -189,3 +189,53 @@ legend_plot <- ggplot(data, aes(y = ID, x = 1, label = paste(ID, Especie, "-", I
 
 # Ajustar la disposición de los gráficos para acercar la leyenda de especies a la leyenda de IVI
 grid.arrange(voronoi_plot, legend_plot, ncol = 2, widths = c(5,0))
+
+
+
+# contenido de carbono ----------------------------------------------------
+
+
+
+# Definir los datos con las categorías corregidas
+datos <- data.frame(
+  categoria = c("Cultivos agroforestales", "Cultivos agroforestales", "Maderas nobles", "Frutales",
+                "Frutales", "Maderas nobles", "Palmas", "Frutales", "Maderas nobles", "Frutales",
+                "Frutales", "Frutales", "Maderas nobles", "Frutales", "Frutales", "Maderas nobles",
+                "Maderas nobles", "Frutales", "Frutales", "Frutales", "Frutales", "Frutales",
+                "Frutales", "Frutales", "Frutales", "Frutales", "Palmas", "Frutales"),
+  especie = c("Coffea arabica L. cv. Mundo Novo", "Coffea arabica L. cv. Caturra",
+              "Cedrela odorata L.", "Citrus sinensis (L.) Osbeck", "Theobroma cacao L.",
+              "Cordia alliodora (Ruiz & Pav.) Oken", "Cocos nucifera L.",
+              "Theobroma cacao L. var. tigre", "Spondias mombin L.",
+              "Psidium friedrichsthalianum O. Berg.", "Mangifera indica L. 'Petacón'",
+              "Citrus reticulata Blanco", "Inga vera Willd", "Spondias purpurea L.",
+              "Annona reticulata L.", "Inga inicuil (Kunth) DC", "Persea schiedeana Nees",
+              "Byrsonima crassifolia (L.) Kunth.", "Persea americana Mill.",
+              "Tamarindus indica L.", "Citrus limon (L.) Burm. f.", "Litchi chinensis Sonn",
+              "Musa paradisiaca L.", "Manilkara zapota (L.) P.Royen",
+              "Pouteria sapota (Jacq.) H.E. Moore & Stearn", "Musa acuminata Colla",
+              "Chamaedorea tepejilote Liebm.", "Nephelium lappaceum L."),
+  carbono = c(4.971, 4.190, 2.871, 1.915, 1.215, 0.784, 0.484, 0.452, 0.380, 0.378, 
+              0.349, 0.243, 0.216, 0.182, 0.176, 0.166, 0.161, 0.159, 0.097, 0.088, 
+              0.063, 0.047, 0.035, 0.025, 0.023, 0.022, 0.011, 0.005)
+)
+
+# Crear la tabla de nodos (única lista de categorías y especies)
+nodos <- data.frame(name = unique(c(datos$categoria, datos$especie)))
+
+# Crear los enlaces entre categorías y especies
+enlaces <- data.frame(
+  source = match(datos$categoria, nodos$name) - 1,  # Índice de la categoría
+  target = match(datos$especie, nodos$name) - 1,    # Índice de la especie
+  value = datos$carbono                             # Cantidad de carbono capturado
+)
+
+# Verificar si hay valores NA en source o target
+print(enlaces)
+
+# Generar el gráfico de Sankey
+sankeyNetwork(Links = enlaces, Nodes = nodos, 
+              Source = "source", Target = "target",
+              Value = "value", NodeID = "name", 
+              sinksRight = FALSE, fontSize = 12, nodeWidth = 30)
+
