@@ -239,3 +239,120 @@ sankeyNetwork(Links = enlaces, Nodes = nodos,
               Value = "value", NodeID = "name", 
               sinksRight = FALSE, fontSize = 12, nodeWidth = 30)
 
+
+# BRAFICA DE BARRAS -------------------------------------------------------
+
+# Instalar y cargar paquetes necesarios
+
+# Datos
+datos <- data.frame(
+  categoria = c("Cultivos agroforestales", "Cultivos agroforestales", "Maderas nobles", "Frutales",
+                "Frutales", "Maderas nobles", "Palmas", "Frutales", "Maderas nobles", "Frutales",
+                "Frutales", "Frutales", "Maderas nobles", "Frutales", "Frutales", "Maderas nobles",
+                "Maderas nobles", "Frutales", "Frutales", "Frutales", "Frutales", "Frutales",
+                "Frutales", "Frutales", "Frutales", "Frutales", "Palmas", "Frutales"),
+  especie = c("Coffea arabica L. cv. Mundo Novo", "Coffea arabica L. cv. Caturra",
+              "Cedrela odorata L.", "Citrus sinensis (L.) Osbeck", "Theobroma cacao L.",
+              "Cordia alliodora (Ruiz & Pav.) Oken", "Cocos nucifera L.",
+              "Theobroma cacao L. var. tigre", "Spondias mombin L.",
+              "Psidium friedrichsthalianum O. Berg.", "Mangifera indica L. 'Petacón'",
+              "Citrus reticulata Blanco", "Inga vera Willd", "Spondias purpurea L.",
+              "Annona reticulata L.", "Inga inicuil (Kunth) DC", "Persea schiedeana Nees",
+              "Byrsonima crassifolia (L.) Kunth.", "Persea americana Mill.",
+              "Tamarindus indica L.", "Citrus limon (L.) Burm. f.", "Litchi chinensis Sonn",
+              "Musa paradisiaca L.", "Manilkara zapota (L.) P.Royen",
+              "Pouteria sapota (Jacq.) H.E. Moore & Stearn", "Musa acuminata Colla",
+              "Chamaedorea tepejilote Liebm.", "Nephelium lappaceum L."),
+  carbono = c(4.971, 4.190, 2.871, 1.915, 1.215, 0.784, 0.484, 0.452, 0.380, 0.378, 
+              0.349, 0.243, 0.216, 0.182, 0.176, 0.166, 0.161, 0.159, 0.097, 0.088, 
+              0.063, 0.047, 0.035, 0.025, 0.023, 0.022, 0.011, 0.005)
+)
+
+# Sumar carbono por categoría
+carbono_por_categoria <- datos %>%
+  group_by(categoria) %>%
+  summarise(total_carbono = sum(carbono)) %>%
+  arrange(desc(total_carbono))
+
+# Crear gráfica de barras vertical
+barras <- ggplot(carbono_por_categoria, aes(x = reorder(categoria, total_carbono), y = total_carbono, fill = categoria)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "",
+       x = "",
+       y = "(MgC/ha)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  scale_y_continuous(breaks = seq(0, max(carbono_por_categoria$total_carbono), by = 1)) +
+  scale_fill_brewer(palette = "Dark2") +
+  coord_flip()  # Hace que las barras sean verticales
+
+# Mostrar gráfica
+print(barras)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Datos
+
+library(networkD3)
+
+datos <- data.frame(
+  categoria = c("Cultivos agroforestales", "Cultivos agroforestales", "Maderas nobles", "Frutales",
+                "Frutales", "Maderas nobles", "Palmas", "Frutales", "Maderas nobles", "Frutales",
+                "Frutales", "Frutales", "Maderas nobles", "Frutales", "Frutales", "Maderas nobles",
+                "Maderas nobles", "Frutales", "Frutales", "Frutales", "Frutales", "Frutales",
+                "Frutales", "Frutales", "Frutales", "Frutales", "Palmas", "Frutales"),
+  especie = c("Coffea arabica L. cv. Mundo Novo", "Coffea arabica L. cv. Caturra",
+              "Cedrela odorata L.", "Citrus sinensis (L.) Osbeck", "Theobroma cacao L.",
+              "Cordia alliodora (Ruiz & Pav.) Oken", "Cocos nucifera L.",
+              "Theobroma cacao L. var. tigre", "Spondias mombin L.",
+              "Psidium friedrichsthalianum O. Berg.", "Mangifera indica L. 'Petacón'",
+              "Citrus reticulata Blanco", "Inga vera Willd", "Spondias purpurea L.",
+              "Annona reticulata L.", "Inga inicuil (Kunth) DC", "Persea schiedeana Nees",
+              "Byrsonima crassifolia (L.) Kunth.", "Persea americana Mill.",
+              "Tamarindus indica L.", "Citrus limon (L.) Burm. f.", "Litchi chinensis Sonn",
+              "Musa paradisiaca L.", "Manilkara zapota (L.) P.Royen",
+              "Pouteria sapota (Jacq.) H.E. Moore & Stearn", "Musa acuminata Colla",
+              "Chamaedorea tepejilote Liebm.", "Nephelium lappaceum L."),
+  Mgc_ha = c(4,971, 4.190, 2.871, 1.915, 1.215, 0.784, 0.484, 0.452, 0.380, 0.378, 
+             0.349, 0.243, 0.216, 0.182, 0.176, 0.166, 0.161, 0.159, 0.097, 0.088, 
+             0.063, 0.047, 0.035, 0.025, 0.023, 0.022, 0.011, 0.005)
+)
+
+# Crear la tabla de nodos (única lista de categorías y especies)
+nodos <- data.frame(name = unique(c(datos$categoria, datos$especie)))
+
+# Crear los enlaces entre categorías y especies
+enlaces <- data.frame(
+  source = match(datos$categoria, nodos$name) - 1,  # Índice de la categoría
+  target = match(datos$especie, nodos$name) - 1,    # Índice de la especie
+  value = datos$Mgc_ha                             # MGC/ha (valor a mostrar)
+)
+
+# Para mostrar los valores de MGC/ha en los nodos de las especies
+nodos$label <- ifelse(nodos$name %in% datos$especie, 
+                      paste(nodos$name, " (", 
+                            format(datos$Mgc_ha[match(nodos$name, datos$especie)], digits = 2), 
+                            " MgC/ha)", sep = ""),
+                      nodos$name)
+
+# Generar el gráfico de Sankey
+sankeyNetwork(Links = enlaces, Nodes = nodos, 
+              Source = "source", Target = "target",
+              Value = "value", NodeID = "label",  # Usar la etiqueta con valores de MGC/ha
+              sinksRight = FALSE, fontSize = 12, nodeWidth = 30)
+
+
+
+
