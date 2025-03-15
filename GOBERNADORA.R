@@ -3,14 +3,14 @@
 
 DATOS <- read.csv("GOBERNADORA/GOB.CSV")
 library(ggplot2)
-
+library(lmtest)
+library(car)
 # MODELOS NO LINEALES PARA HOJAS SECAS --------------------------------------------------------
 
 #POTENCIA
 
-POTENCIA <- nls(PSFH ~ B0 * Dp ^B1, data = DATOS,  
+POTENCIA <- nls(PSFT ~ B0 * Dp^B1, data = DATOS,  
               start = list(B0 = 1, B1 = 1)) 
-POTENCIA
 
 summary(POTENCIA)
 
@@ -29,7 +29,7 @@ ggplot(DATOS, aes(x = Dp, y = PSFH)) +
 
 #R2AJUSTADA
 # Calcular valores observados y predichos
-y_obs <- DATOS$PSFH
+y_obs <- DATOS$PSFT
 y_pred <- predict(POTENCIA)
 
 # Suma de cuadrados del error (SSE)
@@ -52,26 +52,66 @@ SEE <- sqrt(SSE / (n - p))
 
 cat("Error estándar de la estimación (SEE):", SEE, "\n")
 
+#COEFICIENTE DE VARIACION 
+# Extraer los residuos del modelo
+residuos <- residuals(POTENCIA)
+
+# Calcular la desviación estándar de los residuos
+error_estandar <- sd(residuos)
+
+# Media de la variable dependiente (PSFH)
+media_y <- mean(DATOS$PSFT)
+
+# Coeficiente de variación (CV) en porcentaje
+CV <- (error_estandar / media_y) * 100
+
+# Mostrar resultado
+CV
 
 
 
 
+#distribucion normal
+shapiro_test <- shapiro.test(residuos)
 
-# MODELOS NO LINEALES PARA RAMAS SECAS ------------------------------------
+print(shapiro_test)
 
-POTENCIA1 <- nls(PSFT ~ B0 * Dp ^B1, data = DATOS,  
-                start = list(B0 = 1, B1 = 1)) 
-POTENCIA1
+#autocorrelacion
 
-# Crear valores predichos a partir del modelo ajustado
-DATOS$Pred1 <- predict(POTENCIA1)
+DATOS$residuos <- residuals(POTENCIA)  # Guardar residuos
 
-# Gráfico con ggplot2
-ggplot(DATOS, aes(x = Dp, y = PSFT)) +
-  geom_point(color = "blue", size = 2) +  # Puntos originales
-  geom_line(aes(y = Pred1), color = "red", size = 1) +  # Línea ajustada
-  labs(title = "Ajuste del modelo no lineal",
-       x = "Diámetro promedio (Dp)",
-       y = "PSFH") +
-  theme_minimal()
+dw_model <- lm(residuos ~ 1, data = DATOS)
+dwtest(dw_model)
 
+
+#heterocedasticidad
+residuos <- resid(POTENCIA)
+ajustados <- fitted(POTENCIA)
+
+# Crear un modelo auxiliar con los residuos al cuadrado
+aux_model <- lm(residuos^2 ~ ajustados)
+
+# Aplicar la prueba de Breusch-Pagan
+bp_test <- bptest(aux_model)
+
+# Mostrar resultados
+print(bp_test)
+
+
+# MODELO LINEAL PARA HOJAS ------------------------------------------------
+
+MODELO <- lm(PSFT ~  DPH, data = DATOS)
+summary(MODELO)
+
+breu <- bptest(MODELO)
+print(breu)
+
+dwtest(MODELO)
+
+shapiro.test(residuals(MODELO))
+
+
+SIEE <- sqrt(sum(residuals(MODELO)^2) / (length(residuals(MODELO)) - length(coef(MODELO))))  # Error estándar de la estimación
+media_obs <- mean(DATOS$PSFT)  # Media de la variable dependiente
+CV <- (SIEE / media_obs) * 100
+CV
