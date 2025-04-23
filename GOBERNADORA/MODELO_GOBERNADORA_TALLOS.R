@@ -7,9 +7,9 @@ library(gridExtra)
 
 # MODELO PARA RAMAS -------------------------------------------------------
 
-modelo <- nls(log(PSFH) ~ b0 + b1 * log(Dp^2*h), 
+modelo <- nls(log(PSFT) ~  b0 + b1* log(Dp^2*h), 
               data = DATOS, 
-              start = list(b0 = 0.001, b1 = 0.005))
+              start = list(b0 = 0.01, b1 = 0.05))
 summary(modelo)
 
 # Predicciones
@@ -71,11 +71,11 @@ DATOS$Estimados <- exp(predict(modelo))
 # Graficar
 library(ggplot2)
 ggplot(DATOS, aes(x = Dp)) +
-  geom_point(aes(y = PSFH, color = "Observado"), size = 2, alpha = 0.7) +
+  geom_point(aes(y = PSFT, color = "Observado"), size = 2, alpha = 0.7) +
   geom_line(aes(y = Estimados, color = "Estimado"), size = 1) +
-  labs(title = "Valores Observados y Estimados de PSFH vs Dp",
+  labs(title = "Valores Observados y Estimados de PSFT vs Dp",
        x = "Diámetro (Dp)",
-       y = "PSFH",
+       y = "PSFT",
        color = "Tipo de valor") +
   scale_color_manual(values = c("Observado" = "darkblue", "Estimado" = "orange")) +
   theme_minimal()
@@ -86,11 +86,11 @@ DATOS$Estimados <- exp(predict(modelo))
 # Graficar puntos observados y estimados
 library(ggplot2)
 ggplot(DATOS, aes(x = Dp)) +
-  geom_point(aes(y = PSFH, color = "Observado"), size = 2.5, alpha = 0.7) +
+  geom_point(aes(y = PSFT, color = "Observado"), size = 2.5, alpha = 0.7) +
   geom_point(aes(y = Estimados, color = "Estimado"), size = 2.5, shape = 17, alpha = 0.7) +
-  labs(title = "Valores Observados y Estimados de PSFH vs Dp",
+  labs(title = "Valores Observados y Estimados de PSFT vs Dp",
        x = "Diámetro (Dp)",
-       y = "PSFH",
+       y = "PSFT",
        color = "Tipo de valor") +
   scale_color_manual(values = c("Observado" = "blue", "Estimado" = "red")) +
   theme_minimal()
