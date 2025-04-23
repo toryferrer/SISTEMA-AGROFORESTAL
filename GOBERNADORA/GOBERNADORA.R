@@ -10,7 +10,7 @@ library(car)
 #POTENCIA
 
 POTENCIA <- nls(PSFT ~ B0 * Dp^B1, data = DATOS,  
-              start = list(B0 = 1, B1 = 1)) 
+              start = list(B0 = 5, B1 = 5) )
 
 summary(POTENCIA)
 
